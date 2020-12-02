@@ -1,11 +1,12 @@
 import pygame
 from settings import *
-from map import world_map
+from map import world_map, mini_map
 
 
 class Drawing:
-    def __init__(self, sc):
+    def __init__(self, sc, sc_map):
         self.sc = sc
+        self.sc_map = sc_map
         self.font = pygame.font.SysFont('Arial', 36, bold=True)
 
     def background(self, angle):
@@ -16,14 +17,15 @@ class Drawing:
         self.ray_casting(player.pos, player.angle)
 
     def draw_map(self, player):
-        player_x, player_y = player.x, player.y
-        if not MODE_3D:
-            for x, y in world_map:
-                pygame.draw.rect(self.sc, WHITE, (x, y, TILE, TILE), 1)
-            pygame.draw.line(self.sc, YELLOW, (player_x, player_y), (player_x + WIDTH * math.cos(player.angle),
-                                                               player_y + WIDTH * math.sin(player.angle)), 2)
-            pygame.draw.circle(self.sc, RED, (int(player_x), int(player_y)), 5)
+        self.sc_map.fill(BLACK)
+        map_x, map_y = player.x // MAP_SCALE, player.y // MAP_SCALE
+        pygame.draw.line(self.sc_map, YELLOW, (map_x, map_y),
+                         (map_x + 12 * math.cos(player.angle), map_y + 12 * math.sin(player.angle)), 2)
+        pygame.draw.circle(self.sc_map, RED, (int(map_x), int(map_y)), 5)
+        for x, y in mini_map:
+            pygame.draw.rect(self.sc_map, GREEN, (x, y, MAP_TILE, MAP_TILE))
 
+        self.sc.blit(self.sc_map, MAP_POS)
 
     def fps(self, clock):
         display_fps = str(int(clock.get_fps()))
@@ -63,23 +65,17 @@ class Drawing:
                     break
                 y += dy * TILE
 
-            if MODE_3D:
-                depth = depth_v if depth_v < depth_h else depth_h
+            depth = depth_v if depth_v < depth_h else depth_h
 
-                # Fish eye correction
-                depth *= math.cos(player_angle - cur_angle)
-                # W/A for proj_heiht = PROJ_COEFF / depth <- division by 0 error
-                depth = max(depth, 0.00001)
-                proj_height = min(int(PROJ_RATIO / depth), 2 * HEIGHT)
+            # Fish eye correction
+            depth *= math.cos(player_angle - cur_angle)
+            # W/A for proj_heiht = PROJ_COEFF / depth <- division by 0 error
+            depth = max(depth, 0.00001)
+            proj_height = min(int(PROJ_RATIO / depth), 2 * HEIGHT)
 
-                main_color = 255 / (1 + depth * depth * 0.00002)
-                color = (main_color, main_color // 2, main_color // 3)
-                pygame.draw.rect(self.sc, color, (ray * SCALE, HALF_HEIGHT - proj_height // 2, SCALE, proj_height))
-            else:
-                if depth_v < depth_h:
-                    pygame.draw.line(self.sc, DARK_GRAY, player_pos, (x, yv), 1)
-                else:
-                    pygame.draw.line(self.sc, DARK_GRAY, player_pos, (xh, y), 1)
+            main_color = 255 / (1 + depth * depth * 0.00002)
+            color = (main_color, main_color // 2, main_color // 3)
+            pygame.draw.rect(self.sc, color, (ray * SCALE, HALF_HEIGHT - proj_height // 2, SCALE, proj_height))
 
             cur_angle += DELTA_ANGLE
 
