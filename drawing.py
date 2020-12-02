@@ -1,6 +1,5 @@
 import pygame
 from settings import *
-# from ray_casting import ray_casting
 from map import world_map
 
 

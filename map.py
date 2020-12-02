@@ -13,13 +13,10 @@ text_map = [
 ]
 
 world_map = set()
-# map_collisions = list()
+collisions_map = list()
 
 for j, row in enumerate(text_map):
-    # print('j: ' + str(j), 'row: ' + row)
     for i, char in enumerate(row):
-        # print('i: ' + str(i), 'char: ' + char)
         if char == 'W':
             world_map.add((i * TILE, j * TILE))
-            # map_collisions.append(pygame.Rect(i * TILE, j * TILE, TILE, TILE))
-    # print (world_map)
+            collisions_map.append(pygame.Rect(i * TILE, j * TILE, TILE, TILE))
