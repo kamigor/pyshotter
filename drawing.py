@@ -8,13 +8,20 @@ class Drawing:
         self.sc = sc
         self.sc_map = sc_map
         self.font = pygame.font.SysFont('Arial', 36, bold=True)
+        self.textures = {'wall_1': pygame.image.load('img/wall_type_1.png').convert(),
+                         'wall_2': pygame.image.load('img/wall_type_2.png').convert(),
+                         'sky': pygame.image.load('img/sky.png').convert()
+                         }
 
     def background(self, angle):
-        pygame.draw.rect(self.sc, SKY_BLUE, (0, 0, WIDTH, HALF_HEIGHT))
+        sky_offset = -5 * math.degrees(angle) % WIDTH
+        self.sc.blit(self.textures['sky'], (sky_offset, 0))
+        self.sc.blit(self.textures['sky'], (sky_offset - WIDTH, 0))
+        self.sc.blit(self.textures['sky'], (sky_offset + WIDTH, 0))
         pygame.draw.rect(self.sc, DARK_GRAY, (0, HALF_HEIGHT, WIDTH, HALF_HEIGHT))
 
     def radar(self, player):
-        self.ray_casting(player.pos, player.angle)
+        self.ray_casting(player.pos, player.angle, self.textures)
 
     def draw_map(self, player):
         self.sc_map.fill(BLACK)
@@ -23,7 +30,7 @@ class Drawing:
                          (map_x + 12 * math.cos(player.angle), map_y + 12 * math.sin(player.angle)), 2)
         pygame.draw.circle(self.sc_map, RED, (int(map_x), int(map_y)), 5)
         for x, y in mini_map:
-            pygame.draw.rect(self.sc_map, GREEN, (x, y, MAP_TILE, MAP_TILE))
+            pygame.draw.rect(self.sc_map, SANDY, (x, y, MAP_TILE, MAP_TILE))
 
         self.sc.blit(self.sc_map, MAP_POS)
 
@@ -32,7 +39,7 @@ class Drawing:
         render = self.font.render(display_fps, False, RED)
         self.sc.blit(render, FPS_POS)
 
-    def ray_casting(self, player_pos, player_angle):
+    def ray_casting(self, player_pos, player_angle, textures):
 
         def mapping(x, y):
             return (x // TILE) * TILE, (y // TILE) * TILE
@@ -65,17 +72,24 @@ class Drawing:
                     break
                 y += dy * TILE
 
-            depth = depth_v if depth_v < depth_h else depth_h
+            depth, offset = (depth_v, yv) if depth_v < depth_h else (depth_h, xh)
 
             # Fish eye correction
             depth *= math.cos(player_angle - cur_angle)
-            # W/A for proj_heiht = PROJ_COEFF / depth <- division by 0 error
+            # W/A: proj_heiht = PROJ_COEFF / depth <- division by 0 error
             depth = max(depth, 0.00001)
+            # W/A: low FPS near a wall
             proj_height = min(int(PROJ_RATIO / depth), 2 * HEIGHT)
 
             main_color = 255 / (1 + depth * depth * 0.00002)
             color = (main_color, main_color // 2, main_color // 3)
             pygame.draw.rect(self.sc, color, (ray * SCALE, HALF_HEIGHT - proj_height // 2, SCALE, proj_height))
+
+            # textures
+            offset = int(offset) % TILE
+            wall_column = textures['wall_1'].subsurface(offset * TEXTURE_SCALE, 0, TEXTURE_SCALE, TEXTURE_HEIGHT)
+            wall_column = pygame.transform.scale(wall_column, (SCALE, proj_height))
+            self.sc.blit(wall_column, (ray * SCALE, HALF_HEIGHT - proj_height // 2))
 
             cur_angle += DELTA_ANGLE
 
