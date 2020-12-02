@@ -2,7 +2,7 @@ import pygame
 import math
 
 from settings import *
-from map import map_collisions
+# from map import map_collisions
 
 
 class Player:
