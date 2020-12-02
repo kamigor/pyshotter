@@ -8,7 +8,7 @@ class Drawing:
         self.sc = sc
         self.sc_map = sc_map
         self.font = pygame.font.SysFont('Arial', 36, bold=True)
-        self.textures = {'wall_1': pygame.image.load('img/wall_type_1.png').convert(),
+        self.textures = {'wall_1': pygame.image.load('img/wall_type_2.png').convert(),
                          'wall_2': pygame.image.load('img/wall_type_2.png').convert(),
                          'sky': pygame.image.load('img/sky.png').convert()
                          }
